@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#172554">
+<title>식당 웨이팅 관리</title>
+<style>
+:root{font-family:system-ui,-apple-system,"Noto Sans KR",sans-serif;color:#172033;background:#f3f5f9}
+*{box-sizing:border-box}body{margin:0}header{background:#172554;color:white;padding:18px 16px 16px;position:sticky;top:0;z-index:2}
+h1{font-size:21px;margin:0 0 4px}header p{margin:0;font-size:13px;color:#dbeafe}
+main{max-width:760px;margin:auto;padding:14px;display:grid;gap:14px}
+.card{background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:16px;box-shadow:0 2px 8px #0f172a08}
+h2{font-size:17px;margin:0 0 12px}.row{display:flex;gap:8px}.row>*{min-width:0;flex:1}
+label{font-size:13px;font-weight:650;display:block;margin:0 0 5px}
+input,select,button{font:inherit}input,select{width:100%;border:1px solid #cbd5e1;border-radius:10px;padding:12px;background:white;color:#172033}
+button{border:0;border-radius:10px;padding:12px 14px;font-weight:700;cursor:pointer}
+.primary{background:#1d4ed8;color:#fff}.dark{background:#172554;color:#fff}.soft{background:#e2e8f0;color:#172033}.danger{background:#fee2e2;color:#991b1b}.small{padding:8px 10px;font-size:13px}
+.actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:9px}.actions button{flex:1}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.stat{background:#eff6ff;border-radius:12px;padding:12px}.stat span{display:block;font-size:12px;color:#475569}.stat strong{font-size:23px}
+.ticket{border:1px solid #e2e8f0;border-radius:12px;padding:12px;margin-top:9px;display:flex;justify-content:space-between;gap:10px;align-items:center}
+.ticket h3{margin:0 0 4px;font-size:16px}.muted{color:#64748b;font-size:12px}.pill{display:inline-block;background:#dbeafe;color:#1e40af;border-radius:99px;padding:3px 8px;font-size:11px;font-weight:700}
+.ticket-buttons{display:flex;flex-direction:column;gap:5px;min-width:82px}.empty{text-align:center;padding:22px;color:#64748b}
+.notice{font-size:12px;line-height:1.55;color:#475569;background:#f8fafc;padding:10px;border-radius:10px;overflow-wrap:anywhere}
+#status{font-size:12px;margin-top:8px;color:#bfdbfe}details summary{cursor:pointer;font-weight:700}#setup{display:grid;gap:10px;margin-top:12px}
+.hidden{display:none!important}
+@media(min-width:650px){main{grid-template-columns:1fr 1fr}.wide{grid-column:1/-1}}
+</style>
+</head>
+<body>
+<header><h1>🍽️ 식당 웨이팅 관리</h1><p>등록 · 호출 · 입장완료 · 취소</p><div id="status">연결 설정 전 · 이 기기에서만 저장됩니다</div></header>
+<main>
+<section class="card">
+<h2>대기 손님 등록</h2>
+<form id="addForm">
+<div class="row">
+<div><label for="guest">이름 / 별칭</label><input id="guest" maxlength="30" placeholder="예: 김민수" required></div>
+<div><label for="people">인원</label><select id="people"><option>1</option><option>2</option><option>3</option><option selected>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option></select></div>
+</div>
+<div style="margin-top:10px"><label for="memo">메모 (선택)</label><input id="memo" maxlength="80" placeholder="예: 유아 의자 필요"></div>
+<button class="primary" style="width:100%;margin-top:12px" type="submit">＋ 대기 등록</button>
+</form>
+</section>
+<section class="card">
+<h2>현재 현황</h2>
+<div class="stats">
+<div class="stat"><span>대기 중</span><strong id="waitingCount">0</strong></div>
+<div class="stat"><span>호출 중</span><strong id="calledCount">0</strong></div>
+<div class="stat"><span>오늘 입장</span><strong id="doneCount">0</strong></div>
+</div>
+<div class="actions"><button class="dark" id="callNext">다음 팀 호출</button><button class="soft" id="showAll">전체 보기</button></div>
+</section>
+<section class="card wide">
+<div class="row" style="align-items:center"><h2 style="margin:0;flex:1">대기 목록</h2><select id="filter" style="max-width:150px"><option value="active">대기/호출 중</option><option value="all">전체 기록</option><option value="waiting">대기 중</option><option value="called">호출 중</option><option value="done">입장 완료</option><option value="cancelled">취소</option></select></div>
+<div id="list"></div>
+</section>
+<section class="card wide">
+<details>
+<summary>여러 휴대폰 동시 사용 설정</summary>
+<div id="setup">
+<div class="notice">현재는 설정 없이 바로 쓸 수 있는 단일 기기 모드입니다. 여러 휴대폰에서 실시간으로 같은 목록을 보려면 Firebase 무료 프로젝트 설정이 필요합니다. 아래 값을 입력하고 저장한 뒤, 같은 설정을 각 휴대폰에 입력하세요.</div>
+<div><label for="apiKey">Firebase apiKey</label><input id="apiKey" placeholder="AIza..."></div>
+<div><label for="authDomain">authDomain</label><input id="authDomain" placeholder="프로젝트ID.firebaseapp.com"></div>
+<div><label for="databaseURL">Realtime Database URL</label><input id="databaseURL" placeholder="https://프로젝트ID-default-rtdb..."></div>
+<div><label for="projectId">projectId</label><input id="projectId" placeholder="프로젝트 ID"></div>
+<div><label for="appId">appId</label><input id="appId" placeholder="1:...:web:..."></div>
+<div class="row"><button class="primary" id="connect">연결 / 설정 저장</button><button class="soft" id="localMode">로컬 모드로 전환</button></div>
+<div class="notice"><b>Firebase 준비 순서</b><br>1. Firebase 콘솔에서 프로젝트를 만들고 웹 앱을 추가합니다.<br>2. Authentication에서 익명 로그인을 켭니다.<br>3. Realtime Database를 만들고, 아래 안내 파일의 보안 규칙을 설정합니다.<br>4. 위 웹 앱 설정값을 입력합니다. 모든 기기에 같은 설정을 넣어야 합니다.<br><br>주의: 아래 예시 보안 규칙은 링크를 아는 사용자가 익명 인증 후 데이터를 읽고 쓸 수 있는 데모용입니다. 실제 영업장 운영 전에는 접근 통제를 강화하세요.</div>
+</div>
+</details>
+</section>
+<section class="card wide">
+<h2>사용 안내</h2>
+<div class="notice">• 대기번호는 등록 순서대로 자동 부여됩니다.<br>• '다음 팀 호출'은 가장 오래 기다린 대기 팀을 호출 상태로 바꿉니다.<br>• 브라우저 데이터 삭제 시 로컬 기록이 사라질 수 있습니다. 여러 기기 동기화는 Firebase 연결 후 사용할 수 있습니다.<br>• 이 웹앱은 고객에게 자동 문자/알림을 보내지 않습니다. 직원이 화면을 보고 직접 호출하는 용도입니다.</div>
+</section>
+</main>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js";
+
+const $=id=>document.getElementById(id);
+const STORE="restaurant-waiting-v1", CFG="restaurant-waiting-firebase-v1";
+let entries=[], db=null, remoteRef=null, remoteReady=false, updating=false, seq=1, filter="active";
+const statusNames={waiting:"대기 중",called:"호출 중",done:"입장 완료",cancelled:"취소"};
+function localLoad(){try{entries=JSON.parse(localStorage.getItem(STORE)||"[]")}catch{entries=[]}seq=Math.max(1,...entries.map(x=>Number(x.number)+1||1))}
+function persist(){if(remoteReady){if(!updating) set(remoteRef,{entries,updatedAt:Date.now()}).catch(e=>setStatus("동기화 오류: "+e.message));}else localStorage.setItem(STORE,JSON.stringify(entries));render()}
+function setStatus(s){$("status").textContent=s}
+function safe(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function render(){
+ const waiting=entries.filter(x=>x.status==="waiting").length, called=entries.filter(x=>x.status==="called").length, done=entries.filter(x=>x.status==="done").length;
+ $("waitingCount").textContent=waiting;$("calledCount").textContent=called;$("doneCount").textContent=done;
+ let shown=entries.slice().sort((a,b)=>a.createdAt-b.createdAt);
+ if(filter==="active")shown=shown.filter(x=>["waiting","called"].includes(x.status));
+ else if(filter!=="all")shown=shown.filter(x=>x.status===filter);
+ $("list").innerHTML=shown.length?shown.map(x=>`<div class="ticket"><div style="min-width:0;flex:1"><h3><span class="pill">대기 ${String(x.number).padStart(3,"0")}</span> ${safe(x.name)}</h3><div>${x.people}명 · <span class="muted">${new Date(x.createdAt).toLocaleTimeString("ko-KR",{hour:"2-digit",minute:"2-digit"})}</span></div>${x.memo?`<div class="muted">메모: ${safe(x.memo)}</div>`:""}<div class="muted">${statusNames[x.status]||x.status}</div></div><div class="ticket-buttons">${x.status==="waiting"?`<button class="primary small" data-action="call" data-id="${x.id}">호출</button>`:""}${x.status==="called"?`<button class="dark small" data-action="done" data-id="${x.id}">입장 완료</button>`:""}${["waiting","called"].includes(x.status)?`<button class="danger small" data-action="cancel" data-id="${x.id}">취소</button>`:""}${["done","cancelled"].includes(x.status)?`<button class="soft small" data-action="delete" data-id="${x.id}">기록 삭제</button>`:""}</div></div>`).join(""):'<div class="empty">표시할 웨이팅이 없습니다.</div>';
+}
+$("addForm").addEventListener("submit",e=>{e.preventDefault();const name=$("guest").value.trim();if(!name)return;entries.push({id:crypto.randomUUID?crypto.randomUUID():String(Date.now())+Math.random(),number:seq++,name,people:Number($("people").value),memo:$("memo").value.trim(),status:"waiting",createdAt:Date.now()});$("guest").value="";$("memo").value="";persist()});
+$("list").addEventListener("click",e=>{const b=e.target.closest("button[data-action]");if(!b)return;const x=entries.find(v=>v.id===b.dataset.id);if(!x)return;switch(b.dataset.action){case"call":x.status="called";x.calledAt=Date.now();break;case"done":x.status="done";x.doneAt=Date.now();break;case"cancel":x.status="cancelled";break;case"delete":if(!confirm("이 기록을 삭제할까요?"))return;entries=entries.filter(v=>v.id!==x.id);break}persist()});
+$("callNext").addEventListener("click",()=>{const x=entries.filter(v=>v.status==="waiting").sort((a,b)=>a.createdAt-b.createdAt)[0];if(!x){alert("대기 중인 손님이 없습니다.");return}x.status="called";x.calledAt=Date.now();persist();alert(`대기번호 ${String(x.number).padStart(3,"0")}번, ${x.name} 손님을 호출합니다.`)});
+$("filter").addEventListener("change",e=>{filter=e.target.value;render()});$("showAll").addEventListener("click",()=>{$("filter").value="all";filter="all";render()});
+function loadConfig(){try{const c=JSON.parse(localStorage.getItem(CFG)||"{}");for(const k of ["apiKey","authDomain","databaseURL","projectId","appId"])if(c[k])$(k).value=c[k]}catch{}}
+$("connect").addEventListener("click",async()=>{
+ const c={};for(const k of ["apiKey","authDomain","databaseURL","projectId","appId"])c[k]=$(k).value.trim();
+ if(Object.values(c).some(v=>!v)){alert("Firebase 설정값을 모두 입력해 주세요.");return}
+ try{setStatus("Firebase 연결 중…");localStorage.setItem(CFG,JSON.stringify(c));
+ const app=initializeApp(c,"waiting-"+Date.now());const auth=getAuth(app);await signInAnonymously(auth);
+ db=getDatabase(app);remoteRef=ref(db,"waitingRoom/shared-v1");remoteReady=true;
+ onValue(remoteRef,snap=>{updating=true;const val=snap.val();if(val&&Array.isArray(val.entries)){entries=val.entries;seq=Math.max(1,...entries.map(x=>Number(x.number)+1||1));render()}else if(!val){set(remoteRef,{entries,updatedAt:Date.now()})}updating=false;setStatus("실시간 동기화 연결됨 · 여러 기기에서 공유 중")},err=>{remoteReady=false;setStatus("연결 오류: "+err.message)});
+ }catch(err){remoteReady=false;setStatus("연결 실패: "+err.message);alert("연결 실패: "+err.message+"\nFirebase 설정과 익명 로그인/데이터베이스 규칙을 확인해 주세요.")}
+});
+$("localMode").addEventListener("click",()=>{remoteReady=false;db=null;remoteRef=null;localLoad();render();setStatus("로컬 모드 · 이 기기에서만 저장됩니다")});
+localLoad();loadConfig();render();
+</script>
+</body>
+</html>
