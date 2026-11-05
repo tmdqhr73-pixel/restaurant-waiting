@@ -31,6 +31,11 @@ button{border:0;border-radius:10px;padding:12px 14px;font-weight:700;cursor:poin
 <main>
 <section class="card" id="customerCard">
 <h2>손님 대기 등록</h2>
+<div class="stat" style="margin-bottom:12px">
+  <span>현재 대기 팀</span>
+  <strong id="publicWaitingCount">0</strong>
+  <span>실시간 업데이트</span>
+</div>
 <form id="addForm">
 <div class="row">
 <div><label for="guest">이름 / 별칭</label><input id="guest" maxlength="30" placeholder="예: 홍길동" required></div>
@@ -107,12 +112,19 @@ function watchMyTicket(uid){
   $("cancelMine").onclick=async()=>{if(confirm("내 대기를 취소할까요?"))await update(ref(db,`waitings/${uid}/${x.id}`),{status:"cancelled",cancelledAt:Date.now()})};
  },e=>status("내 대기표 읽기 오류: "+e.message));
 }
+function watchPublicWaitingCount(){
+  onValue(ref(db,"publicWaitingCount"),snap=>{
+    $("publicWaitingCount").textContent=Number(snap.val()||0);
+  },e=>status("대기 수 표시 오류: "+e.message));
+}
 function watchStaff(){
  if(staffUnsub)staffUnsub();
  staffUnsub=onValue(ref(db,"waitings"),snap=>{
   allEntries=[];const root=snap.val()||{};
   for(const [uid,records] of Object.entries(root))for(const [id,x] of Object.entries(records||{}))allEntries.push({id,ownerUid:uid,...x});
-  allEntries.sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));renderStaff();status("직원 모드 · 실시간 동기화 연결됨");
+  allEntries.sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));allEntries.sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));
+set(ref(db,"publicWaitingCount"),allEntries.filter(x=>x.status==="waiting").length).catch(e=>status("대기 수 갱신 오류: "+e.message));
+renderStaff();renderStaff();status("직원 모드 · 실시간 동기화 연결됨");
  },e=>status("직원 목록 오류: "+e.message));
 }
 function renderStaff(){
@@ -164,7 +176,7 @@ onAuthStateChanged(auth,async user=>{
   if(user&&!user.isAnonymous){await signOut(auth)}
   if(!user){try{await signInAnonymously(auth)}catch(err){status("인증 오류: "+err.message);return}}
   else {myUid=user.uid;watchMyTicket(myUid);status("손님 모드 · 대기 등록 가능")}
-  if(user&&user.isAnonymous){myUid=user.uid;watchMyTicket(myUid);status("손님 모드 · 대기 등록 가능")}
+  if(user&&user.isAnonymous){myUid=user.uid;watchMyTicket(myUid);watchPublicWaitingCount();status("손님 모드 · 대기 등록 가능")}
  }
 });
 </script>
