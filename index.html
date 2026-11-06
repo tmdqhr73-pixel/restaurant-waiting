@@ -94,6 +94,7 @@ const $=id=>document.getElementById(id);const staffAccess=new URLSearchParams(lo
 if(!staffAccess)$("staffLoginCard").classList.add("hidden");
 const statusText={waiting:"대기 중",called:"호출 중",done:"입장 완료",cancelled:"취소"};
 let myUid=null,myTicketId=null,staffMode=false,allEntries=[],staffUnsub=null,myUnsub=null;
+let lastMyTicketId=null,lastMyTicketStatus=null;
 
 function status(s){$("status").textContent=s}
 function safe(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
