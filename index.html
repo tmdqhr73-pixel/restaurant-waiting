@@ -109,7 +109,15 @@ function watchMyTicket(uid){
   const list=Object.entries(vals).map(([id,x])=>({id,...x})).filter(x=>["waiting","called"].includes(x.status)).sort((a,b)=>b.createdAt-a.createdAt);
   const box=$("myTicket");
   if(!list.length){box.classList.add("hidden");box.innerHTML="";myTicketId=null;return}
-  const x=list[0];myTicketId=x.id;box.classList.remove("hidden");
+  const x=list[0];
+if(lastMyTicketId===x.id && lastMyTicketStatus==="waiting" && x.status==="called"){
+  if("vibrate" in navigator) navigator.vibrate([300,150,300]);
+  alert("돌고래마차에서 호출했어요!");
+}
+lastMyTicketId=x.id;
+lastMyTicketStatus=x.status;
+myTicketId=x.id;
+box.classList.remove("hidden");
   box.innerHTML=`<h2>내 대기표</h2>${ticketHtml(x.id,x)}<button class="danger" id="cancelMine" style="width:100%;margin-top:8px">내 대기 취소</button>`;
   $("cancelMine").onclick=async()=>{if(confirm("내 대기를 취소할까요?"))await update(ref(db,`waitings/${uid}/${x.id}`),{status:"cancelled",cancelledAt:Date.now()})};
  },e=>status("내 대기표 읽기 오류: "+e.message));
