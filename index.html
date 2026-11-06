@@ -90,7 +90,8 @@ const firebaseConfig={
 };
 const STAFF_UID="19A4MvURF9Vq1v7VT1ujFQGaF7E3";
 const app=initializeApp(firebaseConfig),auth=getAuth(app),db=getDatabase(app);
-const $=id=>document.getElementById(id);
+const $=id=>document.getElementById(id);const staffAccess=new URLSearchParams(location.search).get("staff")==="1";
+if(!staffAccess)$("staffLoginCard").classList.add("hidden");
 const statusText={waiting:"대기 중",called:"호출 중",done:"입장 완료",cancelled:"취소"};
 let myUid=null,myTicketId=null,staffMode=false,allEntries=[],staffUnsub=null,myUnsub=null;
 
