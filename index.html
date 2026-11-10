@@ -127,9 +127,9 @@ if(alarmAudioContext){
   oscillator.connect(gain);
   gain.connect(alarmAudioContext.destination);
   oscillator.start();
-  oscillator.stop(alarmAudioContext.currentTime+0.5);
+  oscillator.stop(alarmAudioContext.currentTime+1.5);
 }
-  setTimeout(()=>alert("🔔 돌고래마차에서 호출했어요!"),700);
+  setTimeout(()=>alert("🔔 돌고래마차에서 호출했어요!"),1800);
 }
 lastMyTicketId=x.id;
 lastMyTicketStatus=x.status;
