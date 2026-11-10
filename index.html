@@ -95,6 +95,13 @@ if(!staffAccess)$("staffLoginCard").classList.add("hidden");
 const statusText={waiting:"대기 중",called:"호출 중",done:"입장 완료",cancelled:"취소"};
 let myUid=null,myTicketId=null,staffMode=false,allEntries=[],staffUnsub=null,myUnsub=null;
 let lastMyTicketId=null,lastMyTicketStatus=null;
+let alarmAudioContext=null;
+document.addEventListener("pointerdown",()=>{
+  if(!alarmAudioContext){
+    alarmAudioContext=new (window.AudioContext||window.webkitAudioContext)();
+  }
+  if(alarmAudioContext.state==="suspended")alarmAudioContext.resume();
+},{once:true});
 
 function status(s){$("status").textContent=s}
 function safe(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
@@ -112,6 +119,16 @@ function watchMyTicket(uid){
   const x=list[0];
 if(lastMyTicketId===x.id && lastMyTicketStatus==="waiting" && x.status==="called"){
   if("vibrate" in navigator) navigator.vibrate([300,150,300]);
+if(alarmAudioContext){
+  const oscillator=alarmAudioContext.createOscillator();
+  const gain=alarmAudioContext.createGain();
+  oscillator.frequency.value=880;
+  gain.gain.value=0.2;
+  oscillator.connect(gain);
+  gain.connect(alarmAudioContext.destination);
+  oscillator.start();
+  oscillator.stop(alarmAudioContext.currentTime+0.5);
+}
   alert("돌고래마차에서 호출했어요!");
 }
 lastMyTicketId=x.id;
