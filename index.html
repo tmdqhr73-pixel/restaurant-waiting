@@ -149,8 +149,29 @@ function watchStaff(){
  staffUnsub=onValue(ref(db,"waitings"),snap=>{
   allEntries=[];const root=snap.val()||{};
   for(const [uid,records] of Object.entries(root))for(const [id,x] of Object.entries(records||{}))allEntries.push({id,ownerUid:uid,...x});
-  allEntries.sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));allEntries.sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));
-set(ref(db,"publicWaitingCount"),allEntries.filter(x=>x.status==="waiting").length).catch(e=>status("대기 수 갱신 오류: "+e.message));
+  allEntries.sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));
+
+const waitingEntries=allEntries.filter(x=>x.status==="waiting");
+const positions={};
+allEntries.forEach(x=>positions[x.ownerUid]=0);
+
+const assigned=new Set();
+let number=0;
+
+waitingEntries.forEach(x=>{
+  if(!assigned.has(x.ownerUid)){
+    assigned.add(x.ownerUid);
+    positions[x.ownerUid]=++number;
+  }
+});
+
+Object.entries(positions).forEach(([uid,position])=>{
+  set(ref(db,`publicPositions/${uid}`),position)
+    .catch(e=>status("순번 갱신 오류: "+e.message));
+});
+
+set(ref(db,"publicWaitingCount"),waitingEntries.length)
+  .catch(e=>status("대기 수 갱신 오류: "+e.message));
 renderStaff();renderStaff();status("직원 모드 · 실시간 동기화 연결됨");
  },e=>status("직원 목록 오류: "+e.message));
 }
