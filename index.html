@@ -144,6 +144,14 @@ function watchPublicWaitingCount(){
     $("publicWaitingCount").textContent=Number(snap.val()||0);
   },e=>status("대기 수 표시 오류: "+e.message));
 }
+function watchMyPosition(uid){
+  if(positionUnsub)positionUnsub();
+  positionUnsub=onValue(ref(db,`publicPositions/${uid}`),snap=>{
+    myPosition=Number(snap.val()||0);
+    const el=$("myPosition");
+    if(el)el.textContent=myPosition ? myPosition+"번째" : "-";
+  },e=>status("순번 표시 오류: "+e.message));
+}
 function watchStaff(){
  if(staffUnsub)staffUnsub();
  staffUnsub=onValue(ref(db,"waitings"),snap=>{
