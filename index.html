@@ -110,6 +110,7 @@ function ticketHtml(id,x,staff=false){
  return `<div class="ticket"><div style="min-width:0;flex:1"><h3><span class="pill">번호 ${no}</span> ${safe(x.name)}</h3><div>${Number(x.people)}명 · <span class="muted">${new Date(Number(x.createdAt)||Date.now()).toLocaleTimeString("ko-KR",{hour:"2-digit",minute:"2-digit"})}</span></div>${x.memo?`<div class="muted">메모: ${safe(x.memo)}</div>`:""}<div class="muted">${statusText[x.status]||"상태 확인 중"}</div></div>${staff?`<div class="ticket-buttons">${x.status==="waiting"?`<button class="primary small" data-action="call" data-uid="${x.ownerUid}" data-id="${id}">호출</button>`:""}${x.status==="called"?`<button class="dark small" data-action="done" data-uid="${x.ownerUid}" data-id="${id}">입장 완료</button>`:""}${["waiting","called"].includes(x.status)?`<button class="danger small" data-action="cancel" data-uid="${x.ownerUid}" data-id="${id}">취소</button>`:""}${["done","cancelled"].includes(x.status)?`<button class="soft small" data-action="delete" data-uid="${x.ownerUid}" data-id="${id}">기록 삭제</button>`:""}</div>`:""}</div>`;
 }
 function watchMyTicket(uid){
+watchMyPosition(uid);
  if(myUnsub)myUnsub();
  myUnsub=onValue(ref(db,`waitings/${uid}`),snap=>{
   const vals=snap.val()||{};
