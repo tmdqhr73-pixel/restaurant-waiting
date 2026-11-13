@@ -136,7 +136,7 @@ lastMyTicketId=x.id;
 lastMyTicketStatus=x.status;
 myTicketId=x.id;
 box.classList.remove("hidden");
-  box.innerHTML=`<h2>내 대기표</h2>${ticketHtml(x.id,x)}<button class="danger" id="cancelMine" style="width:100%;margin-top:8px">내 대기 취소</button>`;
+  box.innerHTML=`<h2>내 대기표</h2>${ticketHtml(x.id,x)}<p>내 순번: <strong id="myPosition">-</strong></p><button class="danger" id="cancelMine" style="width:100%;margin-top:8px">내 대기 취소</button>`;
   $("cancelMine").onclick=async()=>{if(confirm("내 대기를 취소할까요?"))await update(ref(db,`waitings/${uid}/${x.id}`),{status:"cancelled",cancelledAt:Date.now()})};
  },e=>status("내 대기표 읽기 오류: "+e.message));
 }
