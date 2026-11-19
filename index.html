@@ -92,7 +92,33 @@ const firebaseConfig={
 const STAFF_UID="19A4MvURF9Vq1v7VT1ujFQGaF7E3";
 const app=initializeApp(firebaseConfig),auth=getAuth(app),db=getDatabase(app);
 const messaging=getMessaging(app);
-const $=id=>document.getElementById(id);const staffAccess=new URLSearchParams(location.search).get("staff")==="1";
+const $=id=>document.getElementById(id);$("enableNotifications").onclick=async()=>{
+  try{
+    const permission=await Notification.requestPermission();
+    if(permission!=="granted"){
+      alert("알림 권한을 허용해 주세요.");
+      return;
+    }
+
+    const registration=await navigator.serviceWorker.register("/restaurant-waiting/firebase-messaging-sw.js");
+
+    const token=await getToken(messaging,{
+      vapidKey:"BOvzYR88dBgB2uNIa4AGFDeNSA4u0SbmBLeZq6MX76uh0wpt44lelU4GtnyvYaJkrbo7ettk8nMcJXOPRnptTZI",
+      serviceWorkerRegistration:registration
+    });
+
+    if(!auth.currentUser) await signInAnonymously(auth);
+
+    await set(ref(db,"notificationTokens/"+auth.currentUser.uid),{
+      token:token,
+      updatedAt:Date.now()
+    });
+
+    alert("호출 알림 등록이 완료됐어요!");
+  }catch(e){
+    status("알림 등록 오류: "+e.message);
+  }
+};const staffAccess=new URLSearchParams(location.search).get("staff")==="1";
 if(!staffAccess)$("staffLoginCard").classList.add("hidden");
 const statusText={waiting:"대기 중",called:"호출 중",done:"입장 완료",cancelled:"취소"};
 let myUid=null,myTicketId=null,staffMode=false,allEntries=[],staffUnsub=null,myUnsub=null,positionUnsub=null,myPosition=0;
